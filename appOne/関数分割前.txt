@@ -1,0 +1,182 @@
+#include"libOne.h"
+void gmain(){
+    //ウィンドウ表示
+    window(800, 450);
+    //データ準備----------------------------------------------
+    //手の番号を決めておく
+    int GU = 0;
+    int CHOKI = 1;
+    int PA = 2;
+    //プレイヤーデータ
+    int playerHand;
+    int playerGuImg;
+    int playerChokiImg;
+    int playerPaImg;
+    int playerImg;
+    float playerPx;
+    float playerPy;
+    float playerAngle;
+    float playerR;
+    float playerG;
+    float playerB;
+    int playerLife;
+    //ＰＣデータ
+    int pcHand;
+    int pcGuImg;
+    int pcChokiImg;
+    int pcPaImg;
+    int pcImg;
+    float pcPx;
+    float pcPy;
+    float pcAngle;
+    float pcR;
+    float pcG;
+    float pcB;
+    int pcLife;
+    //ハート画像番号
+    int heartImg;
+    //勝ち負け文字用
+    float resultPx;
+    float resultPy;
+    float resultSize;
+    //状態切り替え
+    int INIT   = 0;
+    int PLAY   = 1;
+    int RESULT = 2;
+    int state = INIT;
+    //画像読み込み-----------------------------------------------------
+    playerGuImg = loadImage("assets\\playerGu.png");
+    playerChokiImg = loadImage("assets\\playerChoki.png");
+    playerPaImg = loadImage("assets\\playerPa.png");
+    pcGuImg = loadImage("assets\\pcGu.png");
+    pcChokiImg = loadImage("assets\\pcChoki.png");
+    pcPaImg = loadImage("assets\\pcPa.png");
+    heartImg = loadImage("assets\\heart.png");
+    //メインループ
+    while (notQuit) {
+        //データ更新-----------------------------------------------------------
+        if (state == INIT) {
+            //試合直前初期値設定
+            //プレイヤーデータ
+            playerHand = GU;
+            playerImg = playerGuImg;
+            playerPx = 250;
+            playerPy = 225;
+            playerAngle = 0;
+            playerR = 255;
+            playerG = 255;
+            playerB = 255;
+            playerLife = 3;
+            //ＰＣデータ
+            pcHand = GU;
+            pcImg = pcGuImg;
+            pcPx = 550;
+            pcPy = 225;
+            pcAngle = 0;
+            pcR = 255;
+            pcG = 255;
+            pcB = 255;
+            pcLife = 3;
+            //勝ち負け文字
+            resultPx = 225;
+            resultPy = 320;
+            resultSize = 0;
+            //ゲームステート切り替え
+            state = PLAY;
+        }
+        else if( state == PLAY ){
+            //試合中-----------------------------------------------------------
+            //A,S,Dいずれかのキーが押されたら
+            if (isTrigger(KEY_A) || isTrigger(KEY_S) || isTrigger(KEY_D)) {
+                //プレイヤーの手を決める---------------------------------------
+                if      (isTrigger(KEY_A)) { playerHand = GU; }
+                else if (isTrigger(KEY_S)) { playerHand = CHOKI; }
+                else if (isTrigger(KEY_D)) { playerHand = PA; }
+                //プレイヤーの画像を切り替える
+                if      (playerHand == GU   ) { playerImg = playerGuImg; }
+                else if (playerHand == CHOKI) { playerImg = playerChokiImg; }
+                else if (playerHand == PA   ) { playerImg = playerPaImg; }
+                //ＰＣの手を決める---------------------------------------------
+                pcHand = random() % 3;
+                //ＰＣの画像を切り替える
+                if      (pcHand == GU   ) { pcImg = pcGuImg; }
+                else if (pcHand == CHOKI) { pcImg = pcChokiImg; }
+                else if (pcHand == PA   ) { pcImg = pcPaImg; }
+                //勝ち負け判定し、色を変える-----------------------------------
+                if (playerHand == pcHand) {
+                    //あいこ
+                    playerR = 255; playerG = 255; playerB = 255;
+                    pcR = 255; pcG = 255; pcB = 255;
+                }
+                else if ((playerHand + 1) % 3 == pcHand) {
+                    //プレイヤー勝ち
+                    playerR = 255; playerG = 200; playerB = 200;
+                    pcR = 255; pcG = 255; pcB = 255;
+                    pcLife--;
+                }
+                else {
+                    //ＰＣ勝ち
+                    playerR = 255; playerG = 255; playerB = 255;
+                    pcR = 255; pcG = 200; pcB = 200;
+                    playerLife--;
+                }
+                //ゲームステート切り替え---------------------------------------
+                if (playerLife == 0 || pcLife == 0) {
+                    state = RESULT;
+                }
+            }
+        }
+        else if(state == RESULT){
+            //試合終了---------------------------------------------------------
+            if (pcLife == 0) {
+                //ＰＣ負け
+                pcPy += 1.0f;
+                pcAngle += -0.005f;
+            }
+            else {
+                //プレイヤー負け
+                playerPy += 1.0f;
+                playerAngle += 0.005f;
+            }
+            //勝ち負け文字を大きくしていく
+            if (resultSize < 180) {
+                resultSize += 10.0f;
+            }
+            //ゲームステート切り替え-------------------------------------------
+            if (isTrigger(KEY_SPACE)) {
+                state = INIT;
+            }
+        }
+        //描画-----------------------------------------------------------------
+        clear(200);
+        //プレイヤーの手
+        rectMode(CENTER);
+        imageColor(playerR, playerG, playerB);
+        image(playerImg, playerPx, playerPy,playerAngle);
+        //ＰＣの手
+        imageColor(pcR, pcG, pcB);
+        image(pcImg, pcPx, pcPy,pcAngle);
+        //プレイヤーハート
+        imageColor(255, 0, 0);
+        for (int i = 0; i < playerLife; i++) {
+            image(heartImg, playerPx - 50 + i * 50, playerPy - 110);
+        }
+        //ＰＣハート
+        for (int i = 0; i < pcLife; i++) {
+            image(heartImg, pcPx - 50 + i * 50, pcPy - 110);
+        }
+        //勝ち負けテキスト
+        if (state == RESULT) {
+            textMode(BOTTOM);
+            textSize(resultSize);
+            if (playerLife > 0) {
+                fill(255, 0, 0);
+                text("勝ち", resultPx, resultPy);
+            }
+            else {
+                fill(0, 0, 200);
+                text("負け", resultPx, resultPy);
+            }
+        }
+    }
+}
